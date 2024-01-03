@@ -140,13 +140,11 @@ int main(int, char **)
 
     while (!glfwWindowShouldClose(window))
     {
-        start_cycle();
-
+         start_cycle();
         ImGui::NewFrame();
-        ImPlot::CreateContext();
-        render(window_obj);
+        render(window);
         ImGui::Render();
-
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         end_cycle(window);
     }
     ImPlot::DestroyContext();

@@ -117,7 +117,58 @@ double WindowClass::evaluateFunction(const Function function, const double x)
     }
 }
 
-void render(WindowClass &window_obj)
+
+bool show_another_window = true;
+bool show_another_window2 = true;
+void render(GLFWwindow *const window)
 {
-    window_obj.Draw("Calculator Tool");
+ if (show_another_window)
+    {
+        ImGui::SetNextWindowPos(ImVec2(0, 20));
+        ImGui::SetNextWindowSize(ImGui::GetMainViewport()->Size);
+
+
+        ImGui::Begin("Another Window", &show_another_window, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove );
+
+    if (ImGui::BeginMainMenuBar())
+    {
+        if (ImGui::BeginMenu("File"))
+        {
+            if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
+            if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+            ImGui::Separator();
+            if (ImGui::MenuItem("Cut", "CTRL+X")) {}
+            if (ImGui::MenuItem("Copy", "CTRL+C")) {}
+            if (ImGui::MenuItem("Paste", "CTRL+V")) {}
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Edit"))
+        {
+            if (ImGui::MenuItem("Undo", "CTRL+Z")) {}
+            if (ImGui::MenuItem("Redo", "CTRL+Y", false, false)) {}  // Disabled item
+            ImGui::Separator();
+            if (ImGui::MenuItem("Cut", "CTRL+X")) {}
+            if (ImGui::MenuItem("Copy", "CTRL+C")) {}
+            if (ImGui::MenuItem("Paste", "CTRL+V")) {}
+            ImGui::EndMenu();
+        }
+        ImGui::EndMainMenuBar();
+    }
+
+        ImGui::Text("Hello from another window!");
+        if (ImGui::Button("Close Me"))
+        {
+            show_another_window = false;
+            glfwSetWindowShouldClose(window, true);
+        }
+        ImGui::End();
+    }
 }
+    // if(show_another_window2)
+    // {
+    //     ImGui::Begin("Another Window2", &show_another_window2);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+    //     ImGui::Text("Hello from another window!");
+    //     if (ImGui::Button("Close Me"))
+    //         show_another_window2 = false;
+    //     ImGui::End();
+    // }}

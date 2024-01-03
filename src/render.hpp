@@ -5,6 +5,7 @@
 #include <string_view>
 
 #include <imgui.h>
+#include <GLFW/glfw3.h>
 
 class WindowClass
 {
@@ -35,4 +36,4 @@ public:
     std::set<Function> selectedFunctions;
 };
 
-void render(WindowClass &window_obj);
+void render(GLFWwindow *const window);
