@@ -14,6 +14,12 @@
 
 #include "render.hpp"
 
+/*******************************************************/
+#include <iostream>
+#include <boost/asio.hpp>
+#include <boost/asio/serial_port.hpp>
+#include <boost/system/error_code.hpp>
+/*******************************************************/
 #if defined(_MSC_VER) && (_MSC_VER >= 1900) &&                                 \
     !defined(IMGUI_DISABLE_WIN32_FUNCTIONS)
 #pragma comment(lib, "legacy_stdio_definitions")
@@ -49,38 +55,41 @@ void end_cycle(GLFWwindow *const window)
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     glfwSwapBuffers(window);
 }
+void print_buffer_hex(const char *buf, size_t size) {
+    for (size_t i = 0; i < size; i++) {
+        // Set formatting for hex output
+        std::cout << std::hex << std::setw(2) << std::setfill('0');
+        // Cast to unsigned int to ensure correct hex representation
+        std::cout << static_cast<unsigned int>(buf[i]) << " ";
+    }
+    std::cout << std::endl; // Add a newline at the end
+}
 
 
-#include <iostream>
-#include <boost/asio.hpp>
-#include <boost/asio/serial_port.hpp>
-#include <boost/system/error_code.hpp>
 
+
+boost::asio::io_service io_service;
+boost::asio::serial_port serial(io_service, "COM12"); // Replace with your port name
+char buffer[1024];
+
+void handle_read(const boost::system::error_code& error, size_t bytes_transferred) {
+    if (!error) {
+        //std::cout.write(buffer, bytes_transferred);
+        print_buffer_hex(reinterpret_cast<const char *>(buffer), bytes_transferred);
+        // Initiate another asynchronous read
+        serial.async_read_some(boost::asio::buffer(buffer), handle_read);
+    }
+}
 int main(int, char **)
 {
-
-    try {
-        boost::asio::io_context ioContext;
-        boost::asio::serial_port_base::baud_rate baudRate(9600); // Adjust the baud rate if needed
-
-        // Iterate over serial ports
-        for (unsigned int i = 1; i <= 256; ++i) {
-            std::string portName = "COM" + std::to_string(i);
-
-            try {
-                boost::asio::serial_port serialPort(ioContext, portName);
-                serialPort.set_option(baudRate);
-
-                // If no exception occurred, the port is available
-                std::cout << "Found serial port: " << portName << std::endl;
-            } catch (const std::exception&) {
-                // Port is not available, continue searching
-            }
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
-
+    serial.set_option(boost::asio::serial_port_base::baud_rate(115200));
+    serial.set_option(boost::asio::serial_port_base::character_size(8));
+    serial.set_option(boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none));
+    serial.set_option(boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one));
+    serial.async_read_some(boost::asio::buffer(buffer), handle_read);
+    std::thread read_thread([]() {
+    io_service.run(); // Start the I/O service within the thread
+    });
 
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
@@ -116,6 +125,8 @@ int main(int, char **)
                                     "Gui",
                                     nullptr,
                                     nullptr);
+    glfwSetWindowSizeLimits(window, WINDOW_WIDTH, WINDOW_HEIGHT, GLFW_DONT_CARE, GLFW_DONT_CARE);
+
     if (window == nullptr)
     {
         return 1;
@@ -147,6 +158,9 @@ int main(int, char **)
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         end_cycle(window);
     }
+    serial.close();
+    io_service.stop(); // Signal the thread to stop
+    read_thread.join(); // Wait for the thread to finish
     ImPlot::DestroyContext();
 
     // Cleanup

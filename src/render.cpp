@@ -120,6 +120,16 @@ double WindowClass::evaluateFunction(const Function function, const double x)
 
 bool show_another_window = true;
 bool show_another_window2 = true;
+ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+ImGuiWindowFlags childframe_window_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar;
+
+float main_frame_width = 0.0f;
+float main_frame_height = 0.0f;
+float child_frame_width = 0.0f;
+float child_frame_height = 0.0f;
+float child2_frame_width = 0.0f;
+float child2_frame_height = 0.0f;
+
 void render(GLFWwindow *const window)
 {
  if (show_another_window)
@@ -128,7 +138,9 @@ void render(GLFWwindow *const window)
         ImGui::SetNextWindowSize(ImGui::GetMainViewport()->Size);
 
 
-        ImGui::Begin("Another Window", &show_another_window, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove );
+        ImGui::Begin("Bad MotherFucker", NULL, window_flags);
+        main_frame_height = ImGui::GetContentRegionAvail().y;
+        main_frame_width = ImGui::GetContentRegionAvail().x;
 
     if (ImGui::BeginMainMenuBar())
     {
@@ -155,13 +167,45 @@ void render(GLFWwindow *const window)
         ImGui::EndMainMenuBar();
     }
 
-        ImGui::Text("Hello from another window!");
-        if (ImGui::Button("Close Me"))
+    {
+        ImGui::BeginChildFrame(ImGui::GetID("Child"), ImVec2(ImGui::GetWindowWidth(), ImGui::GetWindowHeight() / 3.f), childframe_window_flags);
+        child_frame_height = ImGui::GetContentRegionAvail().y;
+        child_frame_width = ImGui::GetContentRegionAvail().x;
+        ImGui::EndChildFrame();
+    }
+
+    {
+        ImGui::BeginChild(ImGui::GetID("Child2"), ImVec2(ImGui::GetWindowWidth() / 6.f, ImGui::GetContentRegionAvail().y- 20), ImGuiChildFlags_Border, childframe_window_flags);
+        child2_frame_height = ImGui::GetContentRegionAvail().y;
+        child2_frame_width = ImGui::GetContentRegionAvail().x;
+        ImGui::Text("Hello motherfuckher!");
+{
+
+        ImGuiStyle& style = ImGui::GetStyle();
+        style.FrameRounding = 4.0f;  // Adjust the radius as desired
+        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding , 4.0f);
+
+        style.ButtonTextAlign = ImVec2(0.0f, 0.5f); // Align text to the left
+        ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, style.ButtonTextAlign);
+
+        if (ImGui::Button("Close Me", ImVec2(child2_frame_width, 50)))
         {
             show_another_window = false;
             glfwSetWindowShouldClose(window, true);
         }
-        ImGui::End();
+        ImGui::PopStyleVar();
+        ImGui::PopStyleVar();
+}
+        if (ImGui::Button("Open", ImVec2(child2_frame_width, 50)))
+        {
+            show_another_window = false;
+            glfwSetWindowShouldClose(window, true);
+        }
+        ImGui::EndChild();
+    }
+
+
+    ImGui::End();
     }
 }
     // if(show_another_window2)
