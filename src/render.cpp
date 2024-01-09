@@ -175,8 +175,6 @@ void render(GLFWwindow *const window)
         static float f;
         ImGui::PushItemWidth(-100);
         ImGui::DragFloat("float##2a", &f);
-        ImGui::PushItemWidth(-100);
-        ImGui::DragFloat("float##1a", &f);
         static bool animate = true;
         ImGui::Checkbox("Animate", &animate);
                 // Fill an array of contiguous float values to plot
@@ -209,30 +207,38 @@ void render(GLFWwindow *const window)
              sprintf_s(overlay, "avg %f", average);
 
              ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, overlay, -1.0f, 1.0f, ImVec2(0, 50.0f));
-
-            static std::vector<float> data;
-
-            // Add a new data point
-            float new_point = sin(ImGui::GetTime());
-            data.push_back(new_point);
-
-            // Remove the oldest data point if there are too many
-            if (data.size() > 1000) {
-                data.erase(data.begin());
-            }
-
-            // Begin a new plot
-            if (ImPlot::BeginPlot("Real-Time Plot")) {
-                // Plot the data
-
-                ImPlot::PlotLine("Sine Wave",  values, IM_ARRAYSIZE(values));
-                // End the plot
-                ImPlot::EndPlot();
-            }
-
         }
 
+
+        static float x_data[1000] = {};
+        static float y_data[1000] = {};
+        static int count = 0;
+        static bool isPlotting = true;
+
+        // Add a button to toggle plotting
+        std::string label = isPlotting ? "Stop " : "Resume";
+        if (ImGui::Button(label.data(), ImVec2(100, 30))) {
+            isPlotting = !isPlotting;
+        }
+
+        ImGui::SameLine();
+
+        if (ImPlot::BeginPlot("Real-Time Plot", NULL, NULL, ImGui::GetContentRegionAvail(), ImPlotFlags_YAxis2)) {
+
+
+            // Generate some data (replace with your actual data source)
+            if(isPlotting)
+            for (int i = 0; i < 1000; i++) {
+                x_data[i] = static_cast<float>(i);
+                y_data[i] = sinf(i * 0.1f + static_cast<float>(ImGui::GetTime()) );
+            }
+
+                ImPlot::PlotLine("Sine Wave", x_data, y_data, 1000);
+        }
+        ImPlot::EndPlot();
+
         ImGui::EndChildFrame();
+
     }
 
     {
@@ -309,7 +315,10 @@ void render(GLFWwindow *const window)
         }
 
         ImGui::EndChild();
+
     }
+
+
 
     ImGui::End();
     }
