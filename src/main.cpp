@@ -68,28 +68,28 @@ void print_buffer_hex(const char *buf, size_t size) {
 
 
 
-boost::asio::io_service io_service;
-boost::asio::serial_port serial(io_service, "COM12"); // Replace with your port name
-char buffer[1024];
+// boost::asio::io_service io_service;
+// boost::asio::serial_port serial(io_service, "COM12"); // Replace with your port name
+// char buffer[1024];
 
-void handle_read(const boost::system::error_code& error, size_t bytes_transferred) {
-    if (!error) {
-        //std::cout.write(buffer, bytes_transferred);
-        print_buffer_hex(reinterpret_cast<const char *>(buffer), bytes_transferred);
-        // Initiate another asynchronous read
-        serial.async_read_some(boost::asio::buffer(buffer), handle_read);
-    }
-}
+// void handle_read(const boost::system::error_code& error, size_t bytes_transferred) {
+//     if (!error) {
+//         //std::cout.write(buffer, bytes_transferred);
+//         print_buffer_hex(reinterpret_cast<const char *>(buffer), bytes_transferred);
+//         // Initiate another asynchronous read
+//         serial.async_read_some(boost::asio::buffer(buffer), handle_read);
+//     }
+// }
 int main(int, char **)
 {
-    serial.set_option(boost::asio::serial_port_base::baud_rate(115200));
-    serial.set_option(boost::asio::serial_port_base::character_size(8));
-    serial.set_option(boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none));
-    serial.set_option(boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one));
-    serial.async_read_some(boost::asio::buffer(buffer), handle_read);
-    std::thread read_thread([]() {
-    io_service.run(); // Start the I/O service within the thread
-    });
+    // serial.set_option(boost::asio::serial_port_base::baud_rate(115200));
+    // serial.set_option(boost::asio::serial_port_base::character_size(8));
+    // serial.set_option(boost::asio::serial_port_base::parity(boost::asio::serial_port_base::parity::none));
+    // serial.set_option(boost::asio::serial_port_base::stop_bits(boost::asio::serial_port_base::stop_bits::one));
+    // serial.async_read_some(boost::asio::buffer(buffer), handle_read);
+    //std::thread read_thread([]() {
+    //io_service.run(); // Start the I/O service within the thread
+    //});
 
     // Setup window
     glfwSetErrorCallback(glfw_error_callback);
@@ -153,14 +153,15 @@ int main(int, char **)
     {
          start_cycle();
         ImGui::NewFrame();
+        ImPlot::CreateContext();
         render(window);
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         end_cycle(window);
     }
-    serial.close();
-    io_service.stop(); // Signal the thread to stop
-    read_thread.join(); // Wait for the thread to finish
+    //serial.close();
+    //io_service.stop(); // Signal the thread to stop
+    //read_thread.join(); // Wait for the thread to finish
     ImPlot::DestroyContext();
 
     // Cleanup
@@ -170,6 +171,8 @@ int main(int, char **)
 
     glfwDestroyWindow(window);
     glfwTerminate();
+
+    ImPlot::DestroyContext();
 
     return 0;
 }

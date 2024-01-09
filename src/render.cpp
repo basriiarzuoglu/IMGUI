@@ -1,5 +1,6 @@
 #include <array>
 #include <cmath>
+#include <vector>
 #include <iostream>
 #include <set>
 #include <string_view>
@@ -129,7 +130,7 @@ float child_frame_width = 0.0f;
 float child_frame_height = 0.0f;
 float child2_frame_width = 0.0f;
 float child2_frame_height = 0.0f;
-
+ WindowClass w;
 void render(GLFWwindow *const window)
 {
  if (show_another_window)
@@ -171,39 +172,144 @@ void render(GLFWwindow *const window)
         ImGui::BeginChildFrame(ImGui::GetID("Child"), ImVec2(ImGui::GetWindowWidth(), ImGui::GetWindowHeight() / 3.f), childframe_window_flags);
         child_frame_height = ImGui::GetContentRegionAvail().y;
         child_frame_width = ImGui::GetContentRegionAvail().x;
+        static float f;
+        ImGui::PushItemWidth(-100);
+        ImGui::DragFloat("float##2a", &f);
+        ImGui::PushItemWidth(-100);
+        ImGui::DragFloat("float##1a", &f);
+        static bool animate = true;
+        ImGui::Checkbox("Animate", &animate);
+                // Fill an array of contiguous float values to plot
+        // Tip: If your float aren't contiguous but part of a structure, you can pass a pointer to your first float
+        // and the sizeof() of your structure in the "stride" parameter.
+        static float values[90] = {};
+        static int values_offset = 0;
+        static double refresh_time = 0.0;
+        if (!animate || refresh_time == 0.0)
+            refresh_time = ImGui::GetTime();
+        while (refresh_time < ImGui::GetTime()) // Create data at fixed 60 Hz rate for the demo
+        {
+            static float phase = 0.0f;
+            values[values_offset] = cosf(phase);
+            values_offset = (values_offset + 1) % IM_ARRAYSIZE(values);
+            phase += 0.10f * values_offset;
+            refresh_time += 1.0f / 60.0f;
+        }
+
+
+        // Plots can display overlay texts
+        // (in this example, we will display an average value)
+        {
+
+             float average = 0.0f;
+             for (int n = 0; n < IM_ARRAYSIZE(values); n++)
+                 average += values[n];
+             average /= (float)IM_ARRAYSIZE(values);
+             char overlay[32];
+             sprintf_s(overlay, "avg %f", average);
+
+             ImGui::PlotLines("Lines", values, IM_ARRAYSIZE(values), values_offset, overlay, -1.0f, 1.0f, ImVec2(0, 50.0f));
+
+            static std::vector<float> data;
+
+            // Add a new data point
+            float new_point = sin(ImGui::GetTime());
+            data.push_back(new_point);
+
+            // Remove the oldest data point if there are too many
+            if (data.size() > 1000) {
+                data.erase(data.begin());
+            }
+
+            // Begin a new plot
+            if (ImPlot::BeginPlot("Real-Time Plot")) {
+                // Plot the data
+
+                ImPlot::PlotLine("Sine Wave",  values, IM_ARRAYSIZE(values));
+                // End the plot
+                ImPlot::EndPlot();
+            }
+
+        }
+
         ImGui::EndChildFrame();
     }
 
     {
+        ImGuiStyle& style = ImGui::GetStyle();
         ImGui::BeginChild(ImGui::GetID("Child2"), ImVec2(ImGui::GetWindowWidth() / 6.f, ImGui::GetContentRegionAvail().y- 20), ImGuiChildFlags_Border, childframe_window_flags);
         child2_frame_height = ImGui::GetContentRegionAvail().y;
         child2_frame_width = ImGui::GetContentRegionAvail().x;
-        ImGui::Text("Hello motherfuckher!");
-{
+        ImVec4 originalColor = style.Colors[ImGuiCol_Button]; // Save the original color
+        ImVec4 originalTextColor = style.Colors[ImGuiCol_Text]; // Save the original color
 
-        ImGuiStyle& style = ImGui::GetStyle();
-        style.FrameRounding = 4.0f;  // Adjust the radius as desired
-        ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding , 4.0f);
+        style.Colors[ImGuiCol_Text] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Set the color to red
+        ImGui::PushStyleColor(ImGuiCol_Text, style.Colors[ImGuiCol_Text]);
 
-        style.ButtonTextAlign = ImVec2(0.0f, 0.5f); // Align text to the left
-        ImGui::PushStyleVar(ImGuiStyleVar_ButtonTextAlign, style.ButtonTextAlign);
+        // Your text here
+        ImGui::Text("Hello, motherfucker!");
 
-        if (ImGui::Button("Close Me", ImVec2(child2_frame_width, 50)))
+        ImGui::PopStyleColor();
+
+        style.Colors[ImGuiCol_Text] = originalTextColor; // Reset to the original color
+
+        ImGui::Text("Hello, world!");
+
+        style.Colors[ImGuiCol_Button] = ImVec4(1.0f, 0.0f, 0.0f, 1.0f); // Set the color to red
+        ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[ImGuiCol_Button]);
+
+        // Your button here
+        if (ImGui::Button("Click me", ImVec2(ImGui::GetContentRegionAvail().x, 50)))
+        {
+            // Handle button click
+        }
+
+        ImGui::PopStyleColor();
+
+        style.Colors[ImGuiCol_Button] = originalColor;
+
+        if (ImGui::Button("Close Me", ImVec2(ImGui::GetContentRegionAvail().x, 50)))
         {
             show_another_window = false;
             glfwSetWindowShouldClose(window, true);
         }
-        ImGui::PopStyleVar();
-        ImGui::PopStyleVar();
-}
-        if (ImGui::Button("Open", ImVec2(child2_frame_width, 50)))
+
+        style.Colors[ImGuiCol_Button] = ImVec4(12.0f, 10.0f, 0.0f, 1.0f); // Set the color to red
+        ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[ImGuiCol_Button]);
+
+        if (ImGui::Button("Click me", ImVec2(ImGui::GetContentRegionAvail().x, 50)))
         {
-            show_another_window = false;
-            glfwSetWindowShouldClose(window, true);
+            // Handle button click
         }
+
+        ImGui::PopStyleColor();
+
+        style.Colors[ImGuiCol_Button] = originalColor;
+
+        // Add a vertical spacer
+        ImGui::Dummy(ImVec2(0.0f, ImGui::GetContentRegionAvail().y - 50 - ImGui::GetFrameHeight() - ImGui::GetStyle().ItemSpacing.y* 2)); // 20.0f is the height of the spacer
+
+        ImGui::Text("PORT:");
+        ImGui::SameLine(); // Place the next widget on the same line
+        const char* items[] = { "Item 1", "Item 2", "Item 3" };
+        static int item_current = 0;
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+        ImGui::Combo("##combo", &item_current, items, IM_ARRAYSIZE(items)); // Create the combo box without a label
+
+
+        if (ImGui::Button("Connect", ImVec2(ImGui::GetContentRegionAvail().x / 2.f, 50)))
+        {
+            // Handle button click
+        }
+
+        ImGui::SameLine();
+        if (ImGui::Button("Disconnect", ImVec2(ImGui::GetContentRegionAvail().x, 50)))
+        {
+            // Handle button click
+        }
+
         ImGui::EndChild();
     }
-
 
     ImGui::End();
     }
